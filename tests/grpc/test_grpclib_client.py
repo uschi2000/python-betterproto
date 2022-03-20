@@ -15,6 +15,7 @@ from tests.output_betterproto.service import (
     DoThingResponse,
     GetThingRequest,
     TestStub as ThingServiceClient,
+    ThingType,
 )
 
 from .thing_service import ThingService
@@ -51,6 +52,24 @@ def handler_trailer_only_unauthenticated():
 async def test_simple_service_call():
     async with ChannelFor([ThingService()]) as channel:
         await _test_client(ThingServiceClient(channel))
+
+@pytest.mark.asyncio
+async def test_messages_roundtrip_with_default_fields():
+    async with ChannelFor([ThingService()]) as channel:
+        client = ThingServiceClient(channel)
+        request = DoThingRequest("name", ["comment"], ThingType.UNKNOWN, 0) # UNKNOWN and 0 are protobuf default values
+        response = await client.do_thing(request)
+
+        # Assert we get back the request
+        assert request == response.request
+        assert response.names == ["name"]
+        assert response.request.number == 0
+        assert response.request.type == ThingType.UNKNOWN
+        assert id(request) != id(response.request) # prove that objects went through serde
+
+        # Try with a newly construction request object
+        expected_request = DoThingRequest("name", ["comment"], ThingType.UNKNOWN, 0)
+        assert expected_request == response.request
 
 
 @pytest.mark.asyncio

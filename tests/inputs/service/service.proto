@@ -12,10 +12,12 @@ message DoThingRequest {
   string name = 1;
   repeated string comments = 2;
   ThingType type = 3;
+  int32 number = 4;
 }
 
 message DoThingResponse {
   repeated string names = 1;
+  DoThingRequest request = 2;
 }
 
 message GetThingRequest {
